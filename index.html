@@ -34,22 +34,6 @@
                 <label for="ticker">Symbol</label>
                 <select id="ticker" disabled>
                     <option value="">Select Symbol</option>
-                    <option value="SPY">SPY</option>
-                    <option value="QQQ">QQQ</option>
-                    <option value="AAPL">AAPL</option>
-                    <option value="TSLA">TSLA</option>
-                    <option value="NVDA">NVDA</option>
-                    <option value="MSFT">MSFT</option>
-                    <option value="AMZN">AMZN</option>
-                    <option value="GOOGL">GOOGL</option>
-                    <option value="META">META</option>
-                    <option value="AMD">AMD</option>
-                    <option value="NFLX">NFLX</option>
-                    <option value="DIS">DIS</option>
-                    <option value="BABA">BABA</option>
-                    <option value="COIN">COIN</option>
-                    <option value="GME">IWM</option>
-                    <option value="AMC">AMC</option>
                 </select>
             </div>
             
@@ -153,6 +137,21 @@
                         <button class="font-btn" data-size="medium">Medium</button>
                         <button class="font-btn" data-size="large">Large</button>
                     </div>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h4>Watchlist</h4>
+                <div class="settings-row">
+                    <label for="newTicker">Add Ticker:</label>
+                    <div class="ticker-input-group">
+                        <input type="text" id="newTicker" placeholder="e.g., AAPL" maxlength="10">
+                        <button id="addTickerBtn" class="add-ticker-btn">Add</button>
+                    </div>
+                </div>
+                <div class="settings-row">
+                    <label>Tickers:</label>
+                    <div id="tickerList" class="ticker-list"></div>
                 </div>
             </div>
 

@@ -29,6 +29,11 @@ const settingsHost = document.getElementById('settingsHost');
 const settingsPort = document.getElementById('settingsPort');
 const settingsClientId = document.getElementById('settingsClientId');
 
+// Watchlist DOM elements
+const newTickerInput = document.getElementById('newTicker');
+const addTickerBtn = document.getElementById('addTickerBtn');
+const tickerList = document.getElementById('tickerList');
+
 // Reconnect dialog
 const reconnectDialog = document.getElementById('reconnectDialog');
 const reconnectConfirmBtn = document.getElementById('reconnectConfirmBtn');
@@ -55,7 +60,8 @@ async function loadSettings() {
         port: envSettings.port,
         clientId: envSettings.clientId,
         theme: 'dark',
-        fontSize: 'medium'
+        fontSize: 'medium',
+        watchlist: ['SPY', 'QQQ', 'AAPL', 'TSLA', 'NVDA', 'MSFT']
     };
 }
 
@@ -76,10 +82,59 @@ function applyFontSize(size) {
     document.body.classList.add(`font-${size}`);
 }
 
+function populateTickerDropdown(watchlist) {
+    tickerInput.innerHTML = '<option value="">Select Symbol</option>';
+    watchlist.forEach(ticker => {
+        const option = document.createElement('option');
+        option.value = ticker;
+        option.textContent = ticker;
+        tickerInput.appendChild(option);
+    });
+}
+
+function renderWatchlist(watchlist) {
+    tickerList.innerHTML = '';
+    watchlist.forEach(ticker => {
+        const tickerItem = document.createElement('div');
+        tickerItem.className = 'ticker-item';
+        tickerItem.innerHTML = `
+            <span class="ticker-symbol">${ticker}</span>
+            <button class="remove-ticker" data-ticker="${ticker}">×</button>
+        `;
+        tickerList.appendChild(tickerItem);
+    });
+
+    document.querySelectorAll('.remove-ticker').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const ticker = btn.dataset.ticker;
+            const currentSettings = await loadSettings();
+            currentSettings.watchlist = currentSettings.watchlist.filter(t => t !== ticker);
+            saveSettings(currentSettings);
+            renderWatchlist(currentSettings.watchlist);
+            populateTickerDropdown(currentSettings.watchlist);
+        });
+    });
+}
+
+async function addTicker() {
+    const ticker = newTickerInput.value.trim().toUpperCase();
+    if (!ticker) return;
+
+    const currentSettings = await loadSettings();
+    if (!currentSettings.watchlist.includes(ticker)) {
+        currentSettings.watchlist.push(ticker);
+        saveSettings(currentSettings);
+        renderWatchlist(currentSettings.watchlist);
+        populateTickerDropdown(currentSettings.watchlist);
+    }
+    newTickerInput.value = '';
+}
+
 async function initializeSettings() {
     const settings = await loadSettings();
     applyTheme(settings.theme);
     applyFontSize(settings.fontSize);
+    populateTickerDropdown(settings.watchlist);
     return settings;
 }
 
@@ -156,6 +211,8 @@ settingsBtn.addEventListener('click', async () => {
         btn.classList.toggle('active', btn.dataset.size === currentSettings.fontSize);
     });
 
+    renderWatchlist(currentSettings.watchlist);
+
     connectionSettingsChanged = false;
     settingsDialog.style.display = 'flex';
 });
@@ -226,6 +283,14 @@ document.querySelectorAll('.font-btn').forEach(btn => {
         document.querySelectorAll('.font-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
     });
+});
+
+addTickerBtn.addEventListener('click', addTicker);
+
+newTickerInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        addTicker();
+    }
 });
 
 reconnectConfirmBtn.addEventListener('click', async () => {

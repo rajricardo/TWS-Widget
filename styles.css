@@ -803,6 +803,96 @@ select option {
     background-color: #4a5563;
 }
 
+/* Watchlist Styles */
+.ticker-input-group {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+}
+
+.ticker-input-group input {
+    flex: 1;
+}
+
+.add-ticker-btn {
+    padding: 6px 14px;
+    background-color: #37c886;
+    color: #0b0f13;
+    border: none;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.add-ticker-btn:hover {
+    background-color: #6af699;
+}
+
+.add-ticker-btn:active {
+    transform: scale(0.95);
+}
+
+.ticker-list {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-height: 150px;
+    overflow-y: auto;
+    padding: 8px;
+    background-color: #1b202c;
+    border: 1px solid #3a4553;
+    border-radius: 4px;
+}
+
+.ticker-list:empty::after {
+    content: "No tickers added yet";
+    color: #99a3b8;
+    font-size: 11px;
+    font-style: italic;
+}
+
+.ticker-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background-color: #242a38;
+    border: 1px solid #37c886;
+    border-radius: 4px;
+    font-size: 11px;
+    color: #f8fafd;
+    font-weight: 500;
+}
+
+.ticker-item .ticker-symbol {
+    color: #6af699;
+}
+
+.ticker-item .remove-ticker {
+    background: none;
+    border: none;
+    color: #ff4579;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.ticker-item .remove-ticker:hover {
+    color: #ff6b9d;
+    transform: scale(1.2);
+}
+
 body.light-theme {
     background-color: #f5f7fa;
     color: #1a1d29;
