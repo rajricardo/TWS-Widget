@@ -1,4 +1,4 @@
-# TWS Electron App Simplification Summary
+# Turbo Trader - Simplification Summary
 
 ## Changes Implemented
 

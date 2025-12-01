@@ -40,7 +40,7 @@ let pendingOrder = null;
 let connectionSettingsChanged = false;
 
 // Settings management
-const SETTINGS_KEY = 'tws_app_settings';
+const SETTINGS_KEY = 'turbo_trader_settings';
 
 async function loadSettings() {
     const savedSettings = localStorage.getItem(SETTINGS_KEY);

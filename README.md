@@ -1,9 +1,8 @@
-# TWS Electron App
+# Turbo Trader
 
-A cross-platform Electron-based application for connecting to Interactive Brokers TWS (Trader Workstation) or IB Gateway via Python API.
+A lightning-fast, cross-platform Electron-based application for connecting to Interactive Brokers TWS (Trader Workstation) or IB Gateway via Python API.
 
-![TWS Connection Interface](screenshot.png)
-![TWS Connection Interface](screenshot2.png)
+![Turbo Trader Interface](screenshot.png)
 
 ## Features
 
@@ -54,7 +53,7 @@ pip3 install ib_insync
 1. Clone or download this repository
 2. Navigate to the project directory:
    ```bash
-   cd tws_electron_app
+   cd turbo-trader
    ```
 3. Install dependencies:
    ```bash
