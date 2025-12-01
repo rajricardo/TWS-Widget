@@ -1072,6 +1072,54 @@ body.light-theme .close-settings-btn:hover {
     background-color: #a0aec0;
 }
 
+body.light-theme .add-ticker-btn {
+    background-color: #37c886;
+    color: #ffffff;
+}
+
+body.light-theme .add-ticker-btn:hover {
+    background-color: #2db96f;
+}
+
+body.light-theme .ticker-list {
+    background-color: #f5f7fa;
+    border-color: #cbd5e0;
+}
+
+body.light-theme .ticker-list::-webkit-scrollbar-track {
+    background: #e2e8f0;
+}
+
+body.light-theme .ticker-list::-webkit-scrollbar-thumb {
+    background: #37c886;
+}
+
+body.light-theme .ticker-list::-webkit-scrollbar-thumb:hover {
+    background: #2db96f;
+}
+
+body.light-theme .ticker-list {
+    scrollbar-color: #37c886 #e2e8f0;
+}
+
+body.light-theme .ticker-item {
+    background-color: #ffffff;
+    border-color: #cbd5e0;
+    color: #1a1d29;
+}
+
+body.light-theme .ticker-item .ticker-symbol {
+    color: #1a1d29;
+}
+
+body.light-theme .ticker-item .remove-ticker {
+    color: #e53e3e;
+}
+
+body.light-theme .ticker-item .remove-ticker:hover {
+    color: #c53030;
+}
+
 body.light-theme select option {
     background-color: #ffffff;
     color: #1a1d29;
