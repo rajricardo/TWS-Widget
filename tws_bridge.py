@@ -101,6 +101,7 @@ def init_ibapi(host, port, client_id):
                 self.request_complete = True
 
             def accountSummary(self, reqId, account, tag, value, currency):
+                log(f"accountSummary callback: reqId={reqId}, tag={tag}, value={value}, currency={currency}")
                 if tag == 'NetLiquidation':
                     self.account_value = float(value)
                 elif tag == 'DailyPnL':
@@ -111,6 +112,7 @@ def init_ibapi(host, port, client_id):
                     self.unrealized_pnl = float(value)
 
             def accountSummaryEnd(self, reqId):
+                log(f"accountSummaryEnd callback: reqId={reqId}")
                 self.request_complete = True
 
             def tickPrice(self, reqId, tickType, price, attrib):

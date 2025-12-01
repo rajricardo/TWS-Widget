@@ -116,7 +116,8 @@ ipcMain.handle('connect-tws', async (event) => {
     outputBuffer = '';
 
     const pythonScript = path.join(__dirname, 'tws_bridge.py');
-    pythonProcess = spawn('python3', [pythonScript, TWS_HOST, TWS_PORT, TWS_CLIENT_ID]);
+    const pythonPath = path.join(__dirname, 'venv', 'bin', 'python3');
+    pythonProcess = spawn(pythonPath, [pythonScript, TWS_HOST, TWS_PORT, TWS_CLIENT_ID]);
 
     let connectionResolved = false;
 
