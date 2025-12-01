@@ -3,6 +3,7 @@
 A cross-platform Electron-based application for connecting to Interactive Brokers TWS (Trader Workstation) or IB Gateway via Python API.
 
 ![TWS Connection Interface](screenshot.png)
+![TWS Connection Interface](screenshot2.png)
 
 ## Features
 
