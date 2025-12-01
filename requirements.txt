@@ -5,7 +5,7 @@
 ib-insync>=0.9.86
 
 # Option 2: ibapi (Official IB API)
-# ibapi>=9.81.1
+ibapi>=9.81.1
 
 # Note: You only need one of these libraries for the app to work
 # ib_insync is recommended for its ease of use and better error handling
