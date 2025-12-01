@@ -569,6 +569,8 @@ tbody tr:hover {
     padding: 20px;
     max-width: 450px;
     width: 90%;
+    max-height: 85vh;
+    overflow-y: auto;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
     border: 2px solid #37c886;
     animation: slideIn 0.3s ease-out;
@@ -840,7 +842,7 @@ select option {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    max-height: 150px;
+    max-height: 120px;
     overflow-y: auto;
     padding: 8px;
     background-color: #1b202c;
@@ -891,6 +893,30 @@ select option {
 .ticker-item .remove-ticker:hover {
     color: #ff6b9d;
     transform: scale(1.2);
+}
+
+/* Scrollbar for ticker list */
+.ticker-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.ticker-list::-webkit-scrollbar-track {
+    background: #13161f;
+    border-radius: 3px;
+}
+
+.ticker-list::-webkit-scrollbar-thumb {
+    background: #37c886;
+    border-radius: 3px;
+}
+
+.ticker-list::-webkit-scrollbar-thumb:hover {
+    background: #6af699;
+}
+
+.ticker-list {
+    scrollbar-width: thin;
+    scrollbar-color: #37c886 #13161f;
 }
 
 body.light-theme {
@@ -1073,4 +1099,29 @@ body.font-large {
 
 body.font-large * {
     font-size: 13px !important;
+}
+
+/* Custom Scrollbar for Settings Modal */
+.modal-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+    background: #1b202c;
+    border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+    background: #37c886;
+    border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+    background: #6af699;
+}
+
+/* Firefox scrollbar */
+.modal-content {
+    scrollbar-width: thin;
+    scrollbar-color: #37c886 #1b202c;
 }

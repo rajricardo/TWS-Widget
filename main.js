@@ -33,9 +33,11 @@ TWS_CLIENT_ID=${clientId}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 700,
-    height: 450,
-    resizable: false,
+    width: 750,
+    height: 500,
+    minWidth: 700,
+    minHeight: 450,
+    resizable: true,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
