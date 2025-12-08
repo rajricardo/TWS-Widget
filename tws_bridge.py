@@ -265,9 +265,18 @@ def place_order_ib_insync(action, ticker, quantity, expiry, strike, option_type,
         bracket_messages = []
         
         if has_stop_loss or has_take_profit:
-            log(f"Placing bracket orders - SL: {stop_loss_pct}, TP: {take_profit_pct}")
+            log(f"Placing bracket orders with OCA group - SL: {stop_loss_pct}, TP: {take_profit_pct}")
             
-            # Calculate stop loss price (percentage below fill price)
+            # Create unique OCA group name for this bracket
+            import time as time_module
+            oca_group = f"Bracket_{int(time_module.time() * 1000)}"
+            log(f"Created OCA group: {oca_group}")
+            
+            # Prepare bracket orders
+            sl_order = None
+            tp_order = None
+            
+            # Calculate and create stop loss order
             if has_stop_loss:
                 try:
                     sl_pct = float(stop_loss_pct)
@@ -277,26 +286,25 @@ def place_order_ib_insync(action, ticker, quantity, expiry, strike, option_type,
                     
                     # Create stop loss order
                     sl_order = Order()
-                    sl_order.action = 'SELL' if action == 'BUY' else 'BUY'  # Opposite of parent
+                    sl_order.action = 'SELL' if action == 'BUY' else 'BUY'
                     sl_order.orderType = 'STP'
                     sl_order.totalQuantity = quantity
-                    sl_order.auxPrice = stop_price  # Stop trigger price
-                    sl_order.transmit = True  # Important: transmit the order
-                    sl_order.outsideRth = True  # Allow outside regular hours
+                    sl_order.auxPrice = stop_price
+                    sl_order.transmit = not has_take_profit  # Only transmit if there's no TP order
+                    sl_order.outsideRth = True
                     
-                    log(f"Submitting stop loss order: action={sl_order.action}, type={sl_order.orderType}, qty={sl_order.totalQuantity}, auxPrice={sl_order.auxPrice}")
+                    # OCA settings for bracket (link with TP if both exist)
+                    if has_take_profit:
+                        sl_order.ocaGroup = oca_group
+                        sl_order.ocaType = 1  # Cancel all remaining orders in group when one fills
                     
-                    # Place stop loss order
-                    sl_trade = ib.placeOrder(contract, sl_order)
-                    ib.sleep(1)
                     bracket_messages.append(f"Stop Loss at ${stop_price:.2f}")
-                    log(f"Stop loss order placed successfully: {sl_trade}")
                 except ValueError as ve:
                     log(f"ValueError with stop loss percentage: {stop_loss_pct} - {ve}")
                 except Exception as e:
-                    log(f"Error placing stop loss order: {str(e)}")
+                    log(f"Error preparing stop loss order: {str(e)}")
             
-            # Calculate take profit price (percentage above fill price)
+            # Calculate and create take profit order
             if has_take_profit:
                 try:
                     tp_pct = float(take_profit_pct)
@@ -306,24 +314,39 @@ def place_order_ib_insync(action, ticker, quantity, expiry, strike, option_type,
                     
                     # Create take profit order
                     tp_order = Order()
-                    tp_order.action = 'SELL' if action == 'BUY' else 'BUY'  # Opposite of parent
+                    tp_order.action = 'SELL' if action == 'BUY' else 'BUY'
                     tp_order.orderType = 'LMT'
                     tp_order.totalQuantity = quantity
                     tp_order.lmtPrice = limit_price
-                    tp_order.transmit = True  # Important: transmit the order
-                    tp_order.outsideRth = True  # Allow outside regular hours
+                    tp_order.transmit = True  # Always transmit the last order
+                    tp_order.outsideRth = True
                     
-                    log(f"Submitting take profit order: action={tp_order.action}, type={tp_order.orderType}, qty={tp_order.totalQuantity}, lmtPrice={tp_order.lmtPrice}")
+                    # OCA settings for bracket (link with SL if both exist)
+                    if has_stop_loss:
+                        tp_order.ocaGroup = oca_group
+                        tp_order.ocaType = 1  # Cancel all remaining orders in group when one fills
                     
-                    # Place take profit order
-                    tp_trade = ib.placeOrder(contract, tp_order)
-                    ib.sleep(1)
                     bracket_messages.append(f"Take Profit at ${limit_price:.2f}")
-                    log(f"Take profit order placed successfully: {tp_trade}")
                 except ValueError as ve:
                     log(f"ValueError with take profit percentage: {take_profit_pct} - {ve}")
                 except Exception as e:
-                    log(f"Error placing take profit order: {str(e)}")
+                    log(f"Error preparing take profit order: {str(e)}")
+            
+            # Submit bracket orders
+            if sl_order:
+                log(f"Submitting stop loss order with OCA group: {sl_order.ocaGroup if hasattr(sl_order, 'ocaGroup') and sl_order.ocaGroup else 'None'}")
+                sl_trade = ib.placeOrder(contract, sl_order)
+                ib.sleep(0.5)
+                log(f"Stop loss order placed: {sl_trade}")
+            
+            if tp_order:
+                log(f"Submitting take profit order with OCA group: {tp_order.ocaGroup if hasattr(tp_order, 'ocaGroup') and tp_order.ocaGroup else 'None'}")
+                tp_trade = ib.placeOrder(contract, tp_order)
+                ib.sleep(0.5)
+                log(f"Take profit order placed: {tp_trade}")
+            
+            if has_stop_loss and has_take_profit:
+                log(f"Bracket orders linked via OCA group '{oca_group}' - one-cancels-all enabled")
         else:
             log("No bracket orders to place (both SL/TP are '--')")
         
