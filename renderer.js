@@ -71,8 +71,8 @@ async function loadSettings() {
         theme: 'dark',
         fontSize: 'medium',
         watchlist: ['SPY', 'QQQ', 'AAPL', 'TSLA', 'NVDA', 'MSFT'],
-        stopLoss: '--',
-        takeProfit: '--'
+        stopLoss: '',
+        takeProfit: ''
     };
 }
 
@@ -241,8 +241,8 @@ settingsBtn.addEventListener('click', async () => {
     settingsHost.value = currentSettings.host;
     settingsPort.value = currentSettings.port;
     settingsClientId.value = currentSettings.clientId;
-    stopLossInput.value = currentSettings.stopLoss || '--';
-    takeProfitInput.value = currentSettings.takeProfit || '--';
+    stopLossInput.value = currentSettings.stopLoss || '';
+    takeProfitInput.value = currentSettings.takeProfit || '';
 
     document.querySelectorAll('.theme-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.theme === currentSettings.theme);
@@ -337,14 +337,14 @@ newTickerInput.addEventListener('keypress', (e) => {
 stopLossInput.addEventListener('change', async () => {
     const currentSettings = await loadSettings();
     const value = stopLossInput.value.trim();
-    currentSettings.stopLoss = value === '' ? '--' : value;
+    currentSettings.stopLoss = value;
     saveSettings(currentSettings);
 });
 
 takeProfitInput.addEventListener('change', async () => {
     const currentSettings = await loadSettings();
     const value = takeProfitInput.value.trim();
-    currentSettings.takeProfit = value === '' ? '--' : value;
+    currentSettings.takeProfit = value;
     saveSettings(currentSettings);
 });
 
@@ -476,8 +476,8 @@ async function showOrderConfirmation(action) {
 
     // Get current settings for SL/TP
     const currentSettings = await loadSettings();
-    const stopLoss = currentSettings.stopLoss || '--';
-    const takeProfit = currentSettings.takeProfit || '--';
+    const stopLoss = currentSettings.stopLoss || '';
+    const takeProfit = currentSettings.takeProfit || '';
 
     const optionTypeName = optionType === 'C' ? 'Call' : 'Put';
     let details = `
@@ -490,12 +490,12 @@ async function showOrderConfirmation(action) {
     `;
 
     // Add SL/TP info if set
-    if (stopLoss !== '--' || takeProfit !== '--') {
+    if (stopLoss || takeProfit) {
         details += '<p style="margin-top: 10px; font-weight: bold; color: #4a9eff;">Risk Management:</p>';
-        if (stopLoss !== '--') {
+        if (stopLoss) {
             details += `<p><strong>Stop Loss:</strong> ${stopLoss}%</p>`;
         }
-        if (takeProfit !== '--') {
+        if (takeProfit) {
             details += `<p><strong>Take Profit:</strong> ${takeProfit}%</p>`;
         }
     }

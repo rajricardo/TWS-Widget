@@ -87,7 +87,7 @@ def is_market_open():
 
 
 
-def place_order(action, ticker, quantity, expiry, strike, option_type, stop_loss_pct='--', take_profit_pct='--'):
+def place_order(action, ticker, quantity, expiry, strike, option_type, stop_loss_pct='', take_profit_pct=''):
     """Place order with optional bracket orders for SL/TP"""
     try:
         log(f"=== Starting order placement ===")
@@ -189,9 +189,19 @@ def place_order(action, ticker, quantity, expiry, strike, option_type, stop_loss
                 tick_size = 0.10
             return round(price / tick_size) * tick_size
         
+        # Helper function to check if value is numeric
+        def is_numeric_value(val):
+            if val is None or val == '':
+                return False
+            try:
+                float(val)
+                return True
+            except (ValueError, TypeError):
+                return False
+        
         # Check if we need to place bracket orders
-        has_stop_loss = stop_loss_pct != '--' and stop_loss_pct != '' and stop_loss_pct is not None
-        has_take_profit = take_profit_pct != '--' and take_profit_pct != '' and take_profit_pct is not None
+        has_stop_loss = is_numeric_value(stop_loss_pct)
+        has_take_profit = is_numeric_value(take_profit_pct)
         
         log(f"Bracket order check: has_stop_loss={has_stop_loss}, has_take_profit={has_take_profit}")
         
@@ -285,7 +295,7 @@ def place_order(action, ticker, quantity, expiry, strike, option_type, stop_loss
             if has_stop_loss and has_take_profit:
                 log(f"Bracket orders linked via OCA group '{oca_group}' - one-cancels-all enabled")
         else:
-            log("No bracket orders to place (both SL/TP are '--')")
+            log("No bracket orders to place (SL/TP not set)")
         
         # Build success message
         base_message = f"{action} order filled: {quantity} {ticker} {expiry} {strike}{option_type} @ ${fill_price:.2f}"

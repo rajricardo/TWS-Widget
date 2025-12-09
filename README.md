@@ -71,9 +71,8 @@ Click the **gear icon** (⚙️) to access settings:
 Add tickers to your watchlist. Only valid tickers with options trading enabled are accepted.
 
 ### Risk Management
-- **Stop Loss %**: Auto-place stop order below fill price
-- **Take Profit %**: Auto-place limit order above fill price
-- Use `--` to disable
+- **Stop Loss %**: Auto-place stop order below fill price (leave empty to disable)
+- **Take Profit %**: Auto-place limit order above fill price (leave empty to disable)
 
 **Example:** 
 - Fill @ $3.00, SL 20%, TP 30%
