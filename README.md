@@ -1,6 +1,6 @@
 # Turbo Trader
 
-A lightning-fast macOS application for options trading with Interactive Brokers TWS/IB Gateway.
+A lightning-fast desktop application for options trading with Interactive Brokers TWS/IB Gateway.
 
 ![Turbo Trader Interface](screenshot.png)
 
@@ -10,20 +10,20 @@ A lightning-fast macOS application for options trading with Interactive Brokers 
 
 ## Features
 
-- ⚡ Quick setup with automated install script
-- � Real-time options trading interface
+- ⚡ Quick setup with automated install scripts (macOS & Windows)
+- 🎯 Real-time options trading interface
 - 💰 Auto-populate strike prices
 - 📊 Live portfolio balance and P&L tracking
-- ️ Stop Loss & Take Profit with bracket orders
+- 🛡️ Stop Loss & Take Profit with bracket orders
 - 🎨 Dark/Light themes with customizable fonts
 - 📝 Ticker watchlist with validation
 
-## Quick Start (macOS)
+## Quick Start
 
 ### 1. Prerequisites
 
 - Node.js 16+ ([Download](https://nodejs.org/))
-- Python 3.7+ (usually pre-installed on macOS)
+- Python 3.7+ ([Download](https://www.python.org/))
 - TWS or IB Gateway ([Download](https://www.interactivebrokers.com/en/trading/tws.php))
 
 ### 2. Enable API in TWS/Gateway
@@ -35,11 +35,26 @@ A lightning-fast macOS application for options trading with Interactive Brokers 
 
 ### 3. Install & Run
 
+#### macOS / Linux
+
 ```bash
 cd turbo-trader
 ./install.sh
 ./run.sh
 ```
+
+#### Windows (PowerShell)
+
+```powershell
+cd turbo-trader
+.\install.ps1
+.\run.ps1
+```
+
+> **Note for Windows users:** You may need to enable script execution first:
+> ```powershell
+> Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+> ```
 
 That's it! The app will auto-connect to TWS on startup.
 
@@ -85,7 +100,8 @@ Orders are only accepted during market hours:
 - ✅ No other app using same Client ID
 
 **Need Help?**
-Run `./install.sh` again to reinstall dependencies.
+- **macOS/Linux:** Run `./install.sh` to reinstall dependencies
+- **Windows:** Run `.\install.ps1` to reinstall dependencies
 
 ---
 
