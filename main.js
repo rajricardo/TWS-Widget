@@ -299,6 +299,19 @@ ipcMain.handle('get-ticker-price', async (event, ticker) => {
   }
 });
 
+// Handle validate ticker request
+ipcMain.handle('validate-ticker', async (event, ticker) => {
+  try {
+    const response = await sendCommandToBridge({
+      type: 'validate_ticker',
+      data: { ticker }
+    });
+    return response;
+  } catch (error) {
+    return { success: false, message: error.message };
+  }
+});
+
 // Handle update connection settings request
 ipcMain.handle('update-connection-settings', async (event, settings) => {
   TWS_HOST = settings.host || '127.0.0.1';
@@ -318,3 +331,4 @@ ipcMain.handle('get-connection-settings', async () => {
     clientId: TWS_CLIENT_ID
   };
 });
+

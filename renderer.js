@@ -43,6 +43,11 @@ const reconnectDialog = document.getElementById('reconnectDialog');
 const reconnectConfirmBtn = document.getElementById('reconnectConfirmBtn');
 const reconnectCancelBtn = document.getElementById('reconnectCancelBtn');
 
+// Error dialog
+const errorDialog = document.getElementById('errorDialog');
+const errorMessage = document.getElementById('errorMessage');
+const errorOkBtn = document.getElementById('errorOkBtn');
+
 let isConnected = false;
 let refreshInterval = null;
 let pendingOrder = null;
@@ -127,13 +132,41 @@ async function addTicker() {
     if (!ticker) return;
 
     const currentSettings = await loadSettings();
-    if (!currentSettings.watchlist.includes(ticker)) {
-        currentSettings.watchlist.push(ticker);
-        saveSettings(currentSettings);
-        renderWatchlist(currentSettings.watchlist);
-        populateTickerDropdown(currentSettings.watchlist);
+    if (currentSettings.watchlist.includes(ticker)) {
+        showErrorDialog(`${ticker} is already in your watchlist`);
+        newTickerInput.value = '';
+        return;
     }
-    newTickerInput.value = '';
+
+    // Validate ticker
+    if (!isConnected) {
+        showErrorDialog('Please connect to TWS first to validate tickers');
+        return;
+    }
+
+    try {
+        // Disable button and show loading state
+        addTickerBtn.disabled = true;
+        addTickerBtn.textContent = 'Validating...';
+        
+        const validationResult = await window.api.validateTicker(ticker);
+        
+        if (validationResult.success) {
+            currentSettings.watchlist.push(ticker);
+            saveSettings(currentSettings);
+            renderWatchlist(currentSettings.watchlist);
+            populateTickerDropdown(currentSettings.watchlist);
+            showStatus(`${ticker} added to watchlist`, 'success');
+            newTickerInput.value = '';
+        } else {
+            showErrorDialog(validationResult.message);
+        }
+    } catch (error) {
+        showErrorDialog(`Error validating ticker: ${error.message}`);
+    } finally {
+        addTickerBtn.disabled = false;
+        addTickerBtn.textContent = 'Add';
+    }
 }
 
 async function initializeSettings() {
@@ -331,6 +364,23 @@ reconnectDialog.addEventListener('click', (e) => {
         connectionSettingsChanged = false;
     }
 });
+
+// Error dialog event listeners
+errorOkBtn.addEventListener('click', () => {
+    errorDialog.style.display = 'none';
+});
+
+errorDialog.addEventListener('click', (e) => {
+    if (e.target === errorDialog) {
+        errorDialog.style.display = 'none';
+    }
+});
+
+function showErrorDialog(message) {
+    errorMessage.innerHTML = `<p>${message}</p>`;
+    errorDialog.style.display = 'flex';
+}
+
 
 async function handleConnect() {
     try {

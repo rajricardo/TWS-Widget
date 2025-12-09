@@ -116,7 +116,7 @@ python3 -m pip install --upgrade pip
 
 # Install requirements using python -m pip
 pwd
-echo "Installing ib_insync and ibapi..."
+echo "Installing ib-insync and pytz..."
 python3 -m pip install -r requirements.txt
 
 if [ $? -eq 0 ]; then

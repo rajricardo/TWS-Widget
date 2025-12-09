@@ -1,11 +1,5 @@
-# TWS Python API Libraries
-# Install either one or both of these:
-
-# Option 1: ib_insync (Recommended - easier to use)
+# TWS Python API Library
 ib-insync>=0.9.86
 
-# Option 2: ibapi (Official IB API)
-ibapi>=9.81.1
-
-# Note: You only need one of these libraries for the app to work
-# ib_insync is recommended for its ease of use and better error handling
+# Timezone support for market hours validation
+pytz

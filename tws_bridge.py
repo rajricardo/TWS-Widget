@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
-TWS Bridge Script - Connects to Interactive Brokers TWS/IB Gateway and handles trading operations
-This script attempts to use ib_insync first, then falls back to ibapi
+TWS Bridge Script - Connects to Interactive Brokers TWS/IB Gateway using ib_insync
 """
 
 import sys
@@ -10,9 +9,19 @@ import time
 import traceback
 from datetime import datetime
 
+# Fix for Python 3.14+ event loop compatibility
+import asyncio
+try:
+    asyncio.get_event_loop()
+except RuntimeError:
+    # No event loop exists, create one
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
+from ib_insync import IB, Contract, Order, Trade, Stock
+
 # Global IB connection
 ib = None
-using_ib_insync = False
 
 def log(message):
     """Log to stderr"""
@@ -25,146 +34,70 @@ def send_response(response, request_id=None):
     print(json.dumps(response), flush=True)
     log(f"Sent response: {json.dumps(response)}")
 
-def init_ib_insync(host, port, client_id):
-    """Initialize connection using ib_insync"""
-    global ib, using_ib_insync
+def connect(host, port, client_id):
+    """Connect to TWS/IB Gateway using ib_insync"""
+    global ib
     try:
-        from ib_insync import IB, Contract, Order
-        
         ib = IB()
         log(f"Attempting to connect to {host}:{port} with client ID {client_id}...")
         
         ib.connect(host, port, clientId=client_id, timeout=10)
         
         if ib.isConnected():
-            using_ib_insync = True
             log("Successfully connected using ib_insync")
             send_response({"success": True, "message": "Connected to TWS"})
             return True
         else:
-            log("Failed to connect with ib_insync")
+            log("Failed to connect")
+            send_response({"success": False, "message": "Failed to connect. Ensure TWS/Gateway is running."})
             return False
             
     except ImportError:
-        log("ib_insync not installed")
+        log("ib_insync not installed - please run: pip install ib-insync")
+        send_response({"success": False, "message": "ib_insync not installed"})
         return False
     except Exception as e:
-        log(f"Error with ib_insync: {str(e)}")
+        log(f"Error connecting: {str(e)}")
+        send_response({"success": False, "message": f"Connection error: {str(e)}"})
         return False
+def is_market_open():
+    """Check if US options market is currently open"""
+    from datetime import datetime
+    import pytz
+    
+    # Get current time in US/Eastern timezone
+    eastern = pytz.timezone('US/Eastern')
+    now = datetime.now(eastern)
+    
+    # Check if it's a weekday (Monday=0, Sunday=6)
+    if now.weekday() > 4:  # Saturday or Sunday
+        return False, "Market is closed (weekend)"
+    
+    # Market hours: 9:30 AM - 4:00 PM ET
+    market_open = now.replace(hour=9, minute=30, second=0, microsecond=0)
+    market_close = now.replace(hour=16, minute=0, second=0, microsecond=0)
+    
+    if now < market_open:
+        return False, f"Market is closed (opens at 9:30 AM ET, currently {now.strftime('%I:%M %p ET')})"
+    elif now >= market_close:
+        return False, f"Market is closed (closed at 4:00 PM ET, currently {now.strftime('%I:%M %p ET')})"
+    
+    return True, "Market is open"
 
-def init_ibapi(host, port, client_id):
-    """Initialize connection using ibapi"""
-    global ib, using_ib_insync
+
+
+
+def place_order(action, ticker, quantity, expiry, strike, option_type, stop_loss_pct='--', take_profit_pct='--'):
+    """Place order with optional bracket orders for SL/TP"""
     try:
-        from ibapi.client import EClient
-        from ibapi.wrapper import EWrapper
-        from ibapi.contract import Contract
-        from ibapi.order import Order
-        import threading
-        
-        class IBApp(EWrapper, EClient):
-            def __init__(self):
-                EClient.__init__(self, self)
-                self.connected = False
-                self.next_order_id = None
-                self.positions = []
-                self.account_value = 0.0
-                self.daily_pnl = 0.0
-                self.realized_pnl = 0.0
-                self.unrealized_pnl = 0.0
-                self.request_complete = False
-                self.price = 0.0
-                self.price_received = False
-
-            def error(self, reqId, errorCode, errorString, advancedOrderRejectJson=""):
-                log(f"Error {errorCode}: {errorString}")
-
-            def connectAck(self):
-                log("Connection acknowledged")
-                self.connected = True
-
-            def nextValidId(self, orderId):
-                self.next_order_id = orderId
-                if not self.connected:
-                    self.connected = True
-                    log(f"Successfully connected using ibapi (Next order ID: {orderId})")
-
-            def position(self, account, contract, position, avgCost):
-                self.positions.append({
-                    'account': account,
-                    'symbol': contract.symbol if hasattr(contract, 'symbol') else '',
-                    'position': position,
-                    'avgCost': avgCost
-                })
-
-            def positionEnd(self):
-                self.request_complete = True
-
-            def accountSummary(self, reqId, account, tag, value, currency):
-                if tag == 'NetLiquidation':
-                    self.account_value = float(value)
-                elif tag == 'DailyPnL':
-                    self.daily_pnl = float(value)
-                elif tag == 'RealizedPnL':
-                    self.realized_pnl = float(value)
-                elif tag == 'UnrealizedPnL':
-                    self.unrealized_pnl = float(value)
-
-            def accountSummaryEnd(self, reqId):
-                self.request_complete = True
-
-            def tickPrice(self, reqId, tickType, price, attrib):
-                if tickType == 4 and price > 0:
-                    self.price = price
-                    self.price_received = True
-                    log(f"Received price for reqId {reqId}: {price}")
-        
-        ib = IBApp()
-        log(f"Attempting to connect to {host}:{port} with client ID {client_id}...")
-        
-        ib.connect(host, int(port), int(client_id))
-        
-        # Start the socket in a thread
-        api_thread = threading.Thread(target=ib.run, daemon=True)
-        api_thread.start()
-        
-        # Wait for connection
-        timeout = 10
-        start_time = time.time()
-        while not ib.connected:
-            if time.time() - start_time > timeout:
-                log("Connection timeout")
-                return False
-            time.sleep(0.1)
-        
-        using_ib_insync = False
-        send_response({"success": True, "message": "Connected to TWS"})
-        return True
-            
-    except ImportError as e:
-        log(f"ibapi not installed: {str(e)}")
-        return False
-    except Exception as e:
-        log(f"Error with ibapi: {str(e)}")
-        return False
-
-def connect(host, port, client_id):
-    """Connect to TWS/IB Gateway"""
-    # Try ib_insync first
-    if not init_ib_insync(host, port, client_id):
-        # Fall back to ibapi
-        if not init_ibapi(host, port, client_id):
-            send_response({"success": False, "message": "Failed to connect. Ensure TWS/Gateway is running."})
-            return False
-    return True
-
-def place_order_ib_insync(action, ticker, quantity, expiry, strike, option_type, stop_loss_pct='--', take_profit_pct='--'):
-    """Place order using ib_insync with optional bracket orders for SL/TP"""
-    try:
-        from ib_insync import Contract, Order, Trade
-        
         log(f"=== Starting order placement ===")
         log(f"SL/TP received: stop_loss_pct={stop_loss_pct}, take_profit_pct={take_profit_pct}")
+        
+        # Check if market is open before placing order
+        is_open, message = is_market_open()
+        if not is_open:
+            log(f"Order rejected: {message}")
+            return {"success": False, "message": message}
         
         # Create option contract
         contract = Contract()
@@ -370,61 +303,10 @@ def place_order_ib_insync(action, ticker, quantity, expiry, strike, option_type,
         log(f"Error placing order: {str(e)}\\n{traceback.format_exc()}")
         return {"success": False, "message": f"Failed to place order: {str(e)}"}
 
-def place_order_ibapi(action, ticker, quantity, expiry, strike, option_type, stop_loss_pct='--', take_profit_pct='--'):
-    """Place order using ibapi with optional bracket orders for SL/TP"""
-    try:
-        from ibapi.contract import Contract
-        from ibapi.order import Order
-        
-        # Create option contract
-        contract = Contract()
-        contract.symbol = ticker
-        contract.secType = 'OPT'
-        contract.exchange = 'SMART'
-        contract.currency = 'USD'
-        contract.lastTradeDateOrContractMonth = expiry
-        contract.strike = strike
-        contract.right = option_type
-        contract.multiplier = '100'
-        
-        # Create market order
-        order = Order()
-        order.action = action
-        order.orderType = 'MKT'
-        order.totalQuantity = quantity
-        
-        # Place the order
-        if ib.next_order_id is None:
-            return {"success": False, "message": "Not ready to place orders"}
-        
-        parent_order_id = ib.next_order_id
-        ib.placeOrder(parent_order_id, contract, order)
-        ib.next_order_id += 1
-        
-        time.sleep(2)  # Wait for order execution
-        
-        # Note: ibapi implementation is simplified and doesn't wait for fill
-        # In production, you'd need to implement fill detection callbacks
-        base_message = f"{action} order placed for {quantity} {ticker} {expiry} {strike}{option_type} contracts"
-        
-        # Check if we need to place bracket orders
-        has_stop_loss = stop_loss_pct != '--' and stop_loss_pct != '' and stop_loss_pct is not None
-        has_take_profit = take_profit_pct != '--' and take_profit_pct != '' and take_profit_pct is not None
-        
-        if has_stop_loss or has_take_profit:
-            base_message += " (Note: Bracket orders with ibapi require manual fill price monitoring)"
-        
-        return {
-            "success": True,
-            "message": base_message
-        }
-        
-    except Exception as e:
-        log(f"Error placing order: {str(e)}\\n{traceback.format_exc()}")
-        return {"success": False, "message": f"Failed to place order: {str(e)}"}
 
-def get_positions_ib_insync():
-    """Get positions using ib_insync"""
+
+def get_positions():
+    """Get positions"""
     try:
         log("Requesting positions from ib_insync...")
         
@@ -506,50 +388,10 @@ def get_positions_ib_insync():
         log(f"Error getting positions: {str(e)}\n{traceback.format_exc()}")
         return {"success": False, "message": f"Failed to get positions: {str(e)}", "positions": []}
 
-def get_positions_ibapi():
-    """Get positions using ibapi"""
-    try:
-        log("Requesting positions from ibapi...")
-        ib.positions = []
-        ib.request_complete = False
-        ib.reqPositions()
-        
-        # Wait for response
-        timeout = 5
-        start_time = time.time()
-        while not ib.request_complete:
-            if time.time() - start_time > timeout:
-                log("Timeout waiting for positions")
-                break
-            time.sleep(0.1)
-        
-        log(f"Got {len(ib.positions)} positions from TWS")
-        position_list = []
-        for pos in ib.positions:
-            try:
-                position_data = {
-                    'symbol': pos['symbol'],
-                    'position': float(pos['position']),
-                    'avgCost': float(pos['avgCost']),
-                    'marketValue': float(pos['position'] * pos['avgCost']),
-                    'unrealizedPNL': 0,  # Not easily available in ibapi
-                    'dailyPNL': 0  # Not easily available in ibapi
-                }
-                log(f"Position data: {position_data}")
-                position_list.append(position_data)
-            except Exception as e:
-                log(f"Error processing position: {str(e)}")
-                continue
-        
-        log(f"Returning {len(position_list)} positions")
-        return {"success": True, "positions": position_list}
-        
-    except Exception as e:
-        log(f"Error getting positions: {str(e)}\n{traceback.format_exc()}")
-        return {"success": False, "message": f"Failed to get positions: {str(e)}", "positions": []}
 
-def get_balance_ib_insync():
-    """Get account balance using ib_insync"""
+
+def get_balance():
+    """Get account balance"""
     try:
         log("Requesting account values from ib_insync...")
         account_values = ib.accountValues()
@@ -557,7 +399,7 @@ def get_balance_ib_insync():
         net_liquidation = 0
         
         for item in account_values:
-            #log(f"Account value: tag={item.tag}, value={item.value}, currency={item.currency}")
+            log(f"Account value: tag={item.tag}, value={item.value}, currency={item.currency}")
             if item.tag == 'LookAheadAvailableFunds' and item.currency == 'USD':
                 net_liquidation = float(item.value)
                 log(f"Found NetLiquidation: {net_liquidation}")
@@ -572,41 +414,12 @@ def get_balance_ib_insync():
         log(f"Error getting balance: {str(e)}\n{traceback.format_exc()}")
         return {"success": False, "message": f"Failed to get balance: {str(e)}", "balance": 0}
 
-def get_balance_ibapi():
-    """Get account balance using ibapi"""
+
+
+def get_ticker_price(ticker):
+    """Get ticker price"""
     try:
-        log("Requesting account summary from ibapi...")
-        ib.account_value = 0.0
-        ib.request_complete = False
-        ib.reqAccountSummary(1, 'All', 'NetLiquidation')
-
-        # Wait for response
-        timeout = 5
-        start_time = time.time()
-        while not ib.request_complete:
-            if time.time() - start_time > timeout:
-                log("Timeout waiting for account summary")
-                break
-            time.sleep(0.1)
-
-        ib.cancelAccountSummary(1)
-
-        #log(f"Account value: {ib.account_value}")
-        if ib.account_value == 0:
-            log("Warning: Account value is 0")
-
-        return {"success": True, "balance": ib.account_value}
-
-    except Exception as e:
-        log(f"Error getting balance: {str(e)}\n{traceback.format_exc()}")
-        return {"success": False, "message": f"Failed to get balance: {str(e)}", "balance": 0}
-
-def get_ticker_price_ib_insync(ticker):
-    """Get ticker price using ib_insync"""
-    try:
-        from ib_insync import Stock
-
-        log(f"Requesting ticker price for {ticker} from ib_insync...")
+        log(f"Requesting ticker price for {ticker}...")
         contract = Stock(ticker, 'SMART', 'USD')
         ib.qualifyContracts(contract)
 
@@ -633,48 +446,49 @@ def get_ticker_price_ib_insync(ticker):
         log(f"Error getting ticker price: {str(e)}\n{traceback.format_exc()}")
         return {"success": False, "message": f"Failed to get ticker price: {str(e)}", "price": 0}
 
-def get_ticker_price_ibapi(ticker):
-    """Get ticker price using ibapi"""
+def validate_ticker(ticker):
+    """Validate if ticker is valid and supports options trading"""
     try:
-        from ibapi.contract import Contract
-
-        log(f"Requesting ticker price for {ticker} from ibapi...")
-
-        contract = Contract()
-        contract.symbol = ticker
-        contract.secType = 'STK'
-        contract.exchange = 'SMART'
-        contract.currency = 'USD'
-
-        req_id = 9001
-        ib.price = 0.0
-        ib.price_received = False
-
-        ib.reqMktData(req_id, contract, '', False, False, [])
-
-        timeout = 5
-        start_time = time.time()
-        while not ib.price_received:
-            if time.time() - start_time > timeout:
-                log("Timeout waiting for price")
-                break
-            time.sleep(0.1)
-
-        ib.cancelMktData(req_id)
-
-        if ib.price > 0:
-            log(f"Got price for {ticker}: {ib.price}")
-            return {"success": True, "price": float(ib.price)}
-        else:
-            log(f"No valid price found for {ticker}")
-            return {"success": False, "message": f"No price data available for {ticker}", "price": 0}
-
+        log(f"Validating ticker: {ticker}...")
+        
+        # Create stock contract
+        stock_contract = Stock(ticker, 'SMART', 'USD')
+        qualified = ib.qualifyContracts(stock_contract)
+        
+        if not qualified or len(qualified) == 0:
+            log(f"Ticker {ticker} not found or invalid")
+            return {"success": False, "message": f"Invalid ticker symbol: {ticker}"}
+        
+        log(f"Stock contract qualified: {qualified[0]}")
+        
+        # Try to get option chain to verify options trading is available
+        # Request option chain for the stock
+        from ib_insync import Option
+        from datetime import datetime, timedelta
+        
+        # Get a future date for option expiry (e.g., 30 days from now)
+        future_date = (datetime.now() + timedelta(days=30)).strftime('%Y%m%d')
+        
+        # Try to request option chain details
+        chains = ib.reqSecDefOptParams(stock_contract.symbol, '', stock_contract.secType, stock_contract.conId)
+        ib.sleep(1)
+        
+        if not chains or len(chains) == 0:
+            log(f"No options chain found for {ticker}")
+            return {"success": False, "message": f"{ticker} does not support options trading"}
+        
+        log(f"Options trading verified for {ticker}")
+        return {"success": True, "message": f"{ticker} is valid and supports options trading"}
+        
     except Exception as e:
-        log(f"Error getting ticker price: {str(e)}\n{traceback.format_exc()}")
-        return {"success": False, "message": f"Failed to get ticker price: {str(e)}", "price": 0}
+        log(f"Error validating ticker: {str(e)}\n{traceback.format_exc()}")
+        return {"success": False, "message": f"Invalid or unsupported ticker: {ticker}"}
 
-def get_daily_pnl_ib_insync():
-    """Get account daily P&L using ib_insync"""
+
+
+
+def get_daily_pnl():
+    """Get account daily P&L"""
     try:
         log("Requesting account daily P&L from ib_insync...")
         account_values = ib.accountValues()
@@ -683,7 +497,7 @@ def get_daily_pnl_ib_insync():
         unrealized_pnl = 0
         
         for item in account_values:
-            #log(f"Account value: tag={item.tag}, value={item.value}, currency={item.currency}")
+            log(f"Account value: tag={item.tag}, value={item.value}, currency={item.currency}")
             if item.currency == 'USD' or item.currency == 'BASE':
                 if item.tag == 'DailyPnL':
                     daily_pnl = float(item.value)
@@ -706,41 +520,11 @@ def get_daily_pnl_ib_insync():
         log(f"Error getting daily P&L: {str(e)}\n{traceback.format_exc()}")
         return {"success": False, "message": f"Failed to get daily P&L: {str(e)}", "dailyPnL": 0}
 
-def get_daily_pnl_ibapi():
-    """Get account daily P&L using ibapi"""
-    try:
-        log("Requesting daily P&L from ibapi...")
-        ib.daily_pnl = 0.0
-        ib.realized_pnl = 0.0
-        ib.unrealized_pnl = 0.0
-        ib.request_complete = False
-        ib.reqAccountSummary(2, 'All', 'DailyPnL,RealizedPnL,UnrealizedPnL')
-        
-        # Wait for response
-        timeout = 5
-        start_time = time.time()
-        while not ib.request_complete:
-            if time.time() - start_time > timeout:
-                log("Timeout waiting for daily P&L")
-                break
-            time.sleep(0.1)
-        
-        ib.cancelAccountSummary(2)
-        
-        # Calculate total if DailyPnL not available
-        daily_pnl = ib.daily_pnl if hasattr(ib, 'daily_pnl') and ib.daily_pnl != 0 else (ib.realized_pnl + ib.unrealized_pnl)
-        
-        log(f"Daily P&L: {daily_pnl}")
-        return {"success": True, "dailyPnL": daily_pnl}
-        
-    except Exception as e:
-        log(f"Error getting daily P&L: {str(e)}\n{traceback.format_exc()}")
-        return {"success": False, "message": f"Failed to get daily P&L: {str(e)}", "dailyPnL": 0}
 
-def close_position_ib_insync(symbol, position):
-    """Close position using ib_insync"""
+
+def close_position(symbol, position):
+    """Close position"""
     try:
-        from ib_insync import Order, Contract
         
         # Find the position
         positions = ib.positions()
@@ -790,15 +574,18 @@ def close_position_ib_insync(symbol, position):
         log(f"Error closing position: {str(e)}\n{traceback.format_exc()}")
         return {"success": False, "message": f"Failed to close position: {str(e)}"}
 
-def close_position_ibapi(symbol, position):
-    """Close position using ibapi"""
-    # This is simplified for ibapi - in production, you'd need to reconstruct the contract
-    return {"success": False, "message": "Close position not fully implemented for ibapi"}
 
-def close_all_positions_ib_insync():
-    """Close all positions using ib_insync"""
+
+def close_all_positions():
+    """Close all positions"""
     try:
-        from ib_insync import Order, Contract
+        log("=== Starting close all positions ===")
+        
+        # Check if market is open before closing positions
+        is_open, message = is_market_open()
+        if not is_open:
+            log(f"Close all positions rejected: {message}")
+            return {"success": False, "message": message}
         
         log("Fetching all positions to close...")
         positions = ib.positions()
@@ -860,10 +647,7 @@ def close_all_positions_ib_insync():
         log(f"Error closing all positions: {str(e)}\n{traceback.format_exc()}")
         return {"success": False, "message": f"Failed to close all positions: {str(e)}"}
 
-def close_all_positions_ibapi():
-    """Close all positions using ibapi"""
-    # This is simplified for ibapi - in production, you'd need full implementation
-    return {"success": False, "message": "Close all positions not fully implemented for ibapi"}
+
 
 def handle_command(command):
     """Handle incoming command"""
@@ -883,62 +667,40 @@ def handle_command(command):
             stop_loss = data.get('stopLoss', '--')
             take_profit = data.get('takeProfit', '--')
             
-            if using_ib_insync:
-                result = place_order_ib_insync(
-                    data['action'], data['ticker'], data['quantity'],
-                    data['expiry'], data['strike'], data['optionType'],
-                    stop_loss, take_profit
-                )
-            else:
-                result = place_order_ibapi(
-                    data['action'], data['ticker'], data['quantity'],
-                    data['expiry'], data['strike'], data['optionType'],
-                    stop_loss, take_profit
-                )
+            result = place_order(
+                data['action'], data['ticker'], data['quantity'],
+                data['expiry'], data['strike'], data['optionType'],
+                stop_loss, take_profit
+            )
             send_response(result, request_id)
             
         elif cmd_type == 'get_positions':
             log("Getting positions...")
-            if using_ib_insync:
-                result = get_positions_ib_insync()
-            else:
-                result = get_positions_ibapi()
+            result = get_positions()
             log(f"Positions result: {result}")
             send_response(result, request_id)
             
         elif cmd_type == 'get_balance':
             log("Getting balance...")
-            if using_ib_insync:
-                result = get_balance_ib_insync()
-            else:
-                result = get_balance_ibapi()
+            result = get_balance()
             log(f"Balance result: {result}")
             send_response(result, request_id)
             
         elif cmd_type == 'close_position':
             data = command.get('data', {})
             log(f"Closing position: {data}")
-            if using_ib_insync:
-                result = close_position_ib_insync(data['symbol'], data['position'])
-            else:
-                result = close_position_ibapi(data['symbol'], data['position'])
+            result = close_position(data['symbol'], data['position'])
             send_response(result, request_id)
             
         elif cmd_type == 'get_daily_pnl':
             log("Getting daily P&L...")
-            if using_ib_insync:
-                result = get_daily_pnl_ib_insync()
-            else:
-                result = get_daily_pnl_ibapi()
+            result = get_daily_pnl()
             log(f"Daily P&L result: {result}")
             send_response(result, request_id)
             
         elif cmd_type == 'close_all_positions':
             log("Closing all positions...")
-            if using_ib_insync:
-                result = close_all_positions_ib_insync()
-            else:
-                result = close_all_positions_ibapi()
+            result = close_all_positions()
             log(f"Close all positions result: {result}")
             send_response(result, request_id)
 
@@ -946,11 +708,16 @@ def handle_command(command):
             data = command.get('data', {})
             ticker = data.get('ticker', '')
             log(f"Getting ticker price for {ticker}...")
-            if using_ib_insync:
-                result = get_ticker_price_ib_insync(ticker)
-            else:
-                result = get_ticker_price_ibapi(ticker)
+            result = get_ticker_price(ticker)
             log(f"Ticker price result: {result}")
+            send_response(result, request_id)
+
+        elif cmd_type == 'validate_ticker':
+            data = command.get('data', {})
+            ticker = data.get('ticker', '')
+            log(f"Validating ticker {ticker}...")
+            result = validate_ticker(ticker)
+            log(f"Validation result: {result}")
             send_response(result, request_id)
 
         else:
@@ -979,10 +746,7 @@ def main():
     # Command loop
     try:
         while True:
-            if using_ib_insync:
-                ib.sleep(0.1)
-            else:
-                time.sleep(0.1)
+            ib.sleep(0.1)
             
             # Read commands from stdin
             try:
@@ -1004,10 +768,7 @@ def main():
     finally:
         if ib:
             try:
-                if using_ib_insync:
-                    ib.disconnect()
-                else:
-                    ib.disconnect()
+                ib.disconnect()
             except:
                 pass
 

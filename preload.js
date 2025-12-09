@@ -18,6 +18,7 @@ contextBridge.exposeInMainWorld(
     getDailyPnL: () => ipcRenderer.invoke('get-daily-pnl'),
     closePosition: (positionParams) => ipcRenderer.invoke('close-position', positionParams),
     closeAllPositions: () => ipcRenderer.invoke('close-all-positions'),
-    getTickerPrice: (ticker) => ipcRenderer.invoke('get-ticker-price', ticker)
+    getTickerPrice: (ticker) => ipcRenderer.invoke('get-ticker-price', ticker),
+    validateTicker: (ticker) => ipcRenderer.invoke('validate-ticker', ticker)
   }
 );
