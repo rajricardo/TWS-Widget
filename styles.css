@@ -919,6 +919,350 @@ select option {
     scrollbar-color: #37c886 #13161f;
 }
 
+/* Pastel Theme */
+body.pastel-theme {
+    background-color: #f5f0f8;
+    color: #4a4458;
+}
+
+body.pastel-theme .app-header {
+    background: #ffffff;
+    color: #4a4458;
+    border-bottom: 1px solid #A4A9DF;
+}
+
+body.pastel-theme .portfolio-balance,
+body.pastel-theme .daily-pnl {
+    background: rgba(164, 169, 223, 0.2);
+    color: #4a4458;
+    border: 1px solid #A4A9DF;
+}
+
+body.pastel-theme .daily-pnl.positive {
+    background: rgba(164, 223, 189, 0.3);
+    color: #2d7a52;
+    border: 1px solid #A4DFBD;
+}
+
+body.pastel-theme .daily-pnl.negative {
+    background: rgba(223, 164, 198, 0.3);
+    color: #a4486e;
+    border: 1px solid #DFA4C6;
+}
+
+body.pastel-theme .settings-btn {
+    border-color: #A4A9DF;
+    color: #A4A9DF;
+}
+
+body.pastel-theme .settings-btn:hover {
+    background: rgba(164, 169, 223, 0.15);
+}
+
+body.pastel-theme .container {
+    background-color: transparent;
+}
+
+body.pastel-theme .status-message.success {
+    background-color: rgba(164, 223, 189, 0.25);
+    color: #2d7a52;
+    border: 1px solid #A4DFBD;
+}
+
+body.pastel-theme .status-message.error {
+    background-color: rgba(223, 164, 198, 0.25);
+    color: #a4486e;
+    border: 1px solid #DFA4C6;
+}
+
+body.pastel-theme .status-message.connecting {
+    background-color: rgba(164, 169, 223, 0.25);
+    color: #5a5a9d;
+    border: 1px solid #A4A9DF;
+}
+
+body.pastel-theme .trading-section,
+body.pastel-theme .connection-form,
+body.pastel-theme .positions-section,
+body.pastel-theme .modal-content {
+    background: #ffffff;
+    border: 2px solid #A4A9DF;
+    color: #4a4458;
+}
+
+body.pastel-theme .trading-section h3,
+body.pastel-theme .modal-content h3 {
+    color: #5a5a9d;
+}
+
+body.pastel-theme label,
+body.pastel-theme .settings-row label {
+    color: #6a6478;
+}
+
+body.pastel-theme input[type="text"],
+body.pastel-theme input[type="number"],
+body.pastel-theme input[type="date"],
+body.pastel-theme select {
+    background-color: #faf8fc;
+    color: #4a4458;
+    border: 1px solid #d8d0e3;
+}
+
+body.pastel-theme input[type="text"]:focus,
+body.pastel-theme input[type="number"]:focus,
+body.pastel-theme input[type="date"]:focus,
+body.pastel-theme select:focus {
+    border-color: #A4A9DF;
+    box-shadow: 0 0 0 2px rgba(164, 169, 223, 0.25);
+}
+
+body.pastel-theme select:hover:not(:disabled) {
+    border-color: #A4A9DF;
+    background-color: #ffffff;
+}
+
+body.pastel-theme input:disabled,
+body.pastel-theme select:disabled {
+    background-color: #ede9f0;
+    color: #8a8098;
+    border-color: #d8d0e3;
+}
+
+body.pastel-theme .refresh-btn {
+    background-color: #A4DFBD;
+    color: #ffffff;
+}
+
+body.pastel-theme .refresh-btn:hover:not(:disabled) {
+    background-color: #8ed4ab;
+}
+
+body.pastel-theme .refresh-btn:disabled {
+    background-color: #d8d0e3;
+    color: #8a8098;
+}
+
+body.pastel-theme .buy-btn {
+    background-color: #A4DFBD;
+    color: #ffffff;
+}
+
+body.pastel-theme .buy-btn:hover:not(:disabled) {
+    background-color: #8ed4ab;
+}
+
+body.pastel-theme .sell-btn {
+    background-color: #DFA4C6;
+    color: #ffffff;
+}
+
+body.pastel-theme .sell-btn:hover:not(:disabled) {
+    background-color: #d98cb8;
+}
+
+body.pastel-theme .close-all-btn {
+    background: linear-gradient(135deg, #DFA4C6 0%, #d98cb8 100%);
+    color: #ffffff;
+}
+
+body.pastel-theme .close-all-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #d98cb8 0%, #d374aa 100%);
+}
+
+body.pastel-theme .connect-btn {
+    background-color: #A4A9DF;
+    color: #ffffff;
+}
+
+body.pastel-theme .connect-btn:hover {
+    background-color: #8e94d0;
+}
+
+body.pastel-theme .modal {
+    background-color: rgba(164, 169, 223, 0.15);
+}
+
+body.pastel-theme .confirm-details,
+body.pastel-theme .settings-section h4 {
+    color: #5a5a9d;
+}
+
+body.pastel-theme .theme-btn,
+body.pastel-theme .font-btn {
+    background-color: #faf8fc;
+    color: #6a6478;
+    border: 1px solid #d8d0e3;
+}
+
+body.pastel-theme .theme-btn:hover,
+body.pastel-theme .font-btn:hover {
+    border-color: #A4A9DF;
+    color: #4a4458;
+}
+
+body.pastel-theme .theme-btn.active,
+body.pastel-theme .font-btn.active {
+    background-color: #A4A9DF;
+    color: #ffffff;
+}
+
+body.pastel-theme .close-settings-btn {
+    background-color: #d8d0e3;
+    color: #4a4458;
+}
+
+body.pastel-theme .close-settings-btn:hover {
+    background-color: #c8bfd8;
+}
+
+body.pastel-theme .add-ticker-btn {
+    background-color: #A4DFBD;
+    color: #ffffff;
+}
+
+body.pastel-theme .add-ticker-btn:hover {
+    background-color: #8ed4ab;
+}
+
+body.pastel-theme .ticker-list {
+    background-color: #faf8fc;
+    border-color: #d8d0e3;
+}
+
+body.pastel-theme .ticker-list::-webkit-scrollbar-track {
+    background: #ede9f0;
+}
+
+body.pastel-theme .ticker-list::-webkit-scrollbar-thumb {
+    background: #A4A9DF;
+}
+
+body.pastel-theme .ticker-list::-webkit-scrollbar-thumb:hover {
+    background: #8e94d0;
+}
+
+body.pastel-theme .ticker-list {
+    scrollbar-color: #A4A9DF #ede9f0;
+}
+
+body.pastel-theme .ticker-item {
+    background-color: #ffffff;
+    border-color: #A4A9DF;
+    color: #4a4458;
+}
+
+body.pastel-theme .ticker-item .ticker-symbol {
+    color: #5a5a9d;
+    font-weight: 600;
+}
+
+body.pastel-theme .ticker-item .remove-ticker {
+    color: #DFA4C6;
+}
+
+body.pastel-theme .ticker-item .remove-ticker:hover {
+    color: #d98cb8;
+}
+
+body.pastel-theme select option {
+    background-color: #ffffff;
+    color: #4a4458;
+}
+
+body.pastel-theme .order-btn:disabled {
+    background-color: #d8d0e3;
+    color: #8a8098;
+}
+
+body.pastel-theme .close-position-btn {
+    background-color: #DFA4C6;
+    color: #ffffff;
+}
+
+body.pastel-theme .close-position-btn:hover {
+    background-color: #d98cb8;
+}
+
+body.pastel-theme thead {
+    background-color: #faf8fc;
+}
+
+body.pastel-theme th {
+    color: #5a5a9d;
+    border-bottom: 2px solid #d8d0e3;
+}
+
+body.pastel-theme td {
+    border-bottom: 1px solid #ede9f0;
+    color: #6a6478;
+}
+
+body.pastel-theme tbody tr:hover {
+    background-color: rgba(164, 169, 223, 0.08);
+}
+
+body.pastel-theme .positive {
+    color: #2d7a52;
+}
+
+body.pastel-theme .negative {
+    color: #a4486e;
+}
+
+body.pastel-theme .confirm-btn {
+    background: linear-gradient(135deg, #A4DFBD 0%, #8ed4ab 100%);
+    color: #ffffff;
+}
+
+body.pastel-theme .confirm-btn:hover {
+    background: linear-gradient(135deg, #8ed4ab 0%, #7ac99d 100%);
+}
+
+body.pastel-theme .cancel-btn {
+    background: #d8d0e3;
+    color: #4a4458;
+}
+
+body.pastel-theme .cancel-btn:hover {
+    background: #c8bfd8;
+}
+
+body.pastel-theme .radio-label input[type="radio"] {
+    border: 2px solid #A4A9DF;
+}
+
+body.pastel-theme .radio-label input[type="radio"]:checked {
+    background-color: #A4A9DF;
+    box-shadow: 0 0 0 2px #ffffff inset;
+}
+
+body.pastel-theme .radio-label input[type="radio"]:hover {
+    border-color: #8e94d0;
+}
+
+body.pastel-theme .modal-content::-webkit-scrollbar-thumb {
+    background: #A4A9DF;
+}
+
+body.pastel-theme .modal-content::-webkit-scrollbar-thumb:hover {
+    background: #8e94d0;
+}
+
+body.pastel-theme .modal-content::-webkit-scrollbar-track {
+    background: #faf8fc;
+}
+
+body.pastel-theme .modal-content {
+    scrollbar-color: #A4A9DF #faf8fc;
+}
+
+body.pastel-theme .spinner {
+    border: 2px solid rgba(164, 169, 223, 0.3);
+    border-top-color: #A4A9DF;
+}
+
+
 body.light-theme {
     background-color: #f5f7fa;
     color: #1a1d29;

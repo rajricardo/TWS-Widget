@@ -81,11 +81,16 @@ function saveSettings(settings) {
 }
 
 function applyTheme(theme) {
+    // Remove all theme classes first
+    document.body.classList.remove('light-theme', 'pastel-theme');
+    
+    // Apply the selected theme
     if (theme === 'light') {
         document.body.classList.add('light-theme');
-    } else {
-        document.body.classList.remove('light-theme');
+    } else if (theme === 'pastel') {
+        document.body.classList.add('pastel-theme');
     }
+    // 'dark' is the default, so no class needed
 }
 
 function applyFontSize(size) {
