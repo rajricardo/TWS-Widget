@@ -789,19 +789,22 @@ select option {
 .close-settings-btn {
     width: 100%;
     padding: 8px 16px;
-    background-color: #3a4553;
+    background: linear-gradient(135deg, #ff4579 0%, #e83a68 100%);
     color: #f8fafd;
     border: none;
     border-radius: 4px;
     font-size: 11px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.3s;
     margin-top: 10px;
+    box-shadow: 0 2px 8px rgba(255, 69, 121, 0.3);
 }
 
 .close-settings-btn:hover {
-    background-color: #4a5563;
+    background: linear-gradient(135deg, #e83a68 0%, #d4315a 100%);
+    box-shadow: 0 4px 12px rgba(255, 69, 121, 0.4);
+    transform: translateY(-2px);
 }
 
 /* Watchlist Styles */
@@ -1107,12 +1110,12 @@ body.pastel-theme .font-btn.active {
 }
 
 body.pastel-theme .close-settings-btn {
-    background-color: #d8d0e3;
-    color: #4a4458;
+    background: linear-gradient(135deg, #D992F8 0%, #e77af5 100%);
+    color: #ffffff;
 }
 
 body.pastel-theme .close-settings-btn:hover {
-    background-color: #c8bfd8;
+    background: linear-gradient(135deg, #e77af5 0%, #db62f5 100%);
 }
 
 body.pastel-theme .add-ticker-btn {
@@ -1476,12 +1479,13 @@ body.light-theme .font-btn.active {
 }
 
 body.light-theme .close-settings-btn {
-    background-color: #cbd5e0;
-    color: #1a1d29;
+    background: linear-gradient(135deg, #ff4579 0%, #e83a68 100%);
+    color: #f8fafd;
 }
 
 body.light-theme .close-settings-btn:hover {
-    background-color: #a0aec0;
+    background: linear-gradient(135deg, #e83a68 0%, #d4315a 100%);
+    box-shadow: 0 4px 12px rgba(255, 69, 121, 0.4);
 }
 
 body.light-theme .add-ticker-btn {

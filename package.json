@@ -14,7 +14,7 @@
     "trading",
     "turbo-trader"
   ],
-  "author": "",
+  "author": "Raja Shekhar Ramineni",
   "license": "MIT",
   "devDependencies": {
     "electron": "^27.0.0"
