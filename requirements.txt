@@ -1,5 +1,8 @@
 # TWS Python API Library
 ib-insync>=0.9.86
 
+# Native IB API for option chain functionality
+ibapi
+
 # Timezone support for market hours validation
 pytz

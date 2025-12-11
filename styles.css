@@ -36,8 +36,6 @@ body {
 }
 
 .settings-btn {
-    position: absolute;
-    right: 20px;
     background: transparent;
     border: 1px solid #37c886;
     color: #37c886;
@@ -48,6 +46,8 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    min-width: 36px;
+    min-height: 36px;
 }
 
 .settings-btn:hover {
@@ -92,7 +92,6 @@ body {
 }
 
 .container {
-    max-width: 900px;
     margin: 0 auto;
     padding: 15px;
 }
@@ -1519,6 +1518,167 @@ body.font-large * {
 
 /* Firefox scrollbar */
 .modal-content {
+    scrollbar-width: thin;
+    scrollbar-color: #37c886 #1b202c;
+}
+
+/* Header Buttons Container */
+.header-buttons {
+    position: absolute;
+    right: 20px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* Option Chain Icon */
+.option-chain-icon {
+    font-size: 22px;
+    font-weight: 900;
+    font-family: 'Courier New', monospace;
+}
+
+.settings-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    border-color: #99a3b8;
+    color: #99a3b8;
+}
+
+.settings-btn:disabled:hover {
+    background: transparent;
+    transform: none;
+}
+
+/* Option Chain Modal */
+.option-chain-modal {
+    max-width: 900px;
+    width: 95%;
+}
+
+.option-chain-ticker {
+    font-size: 14px;
+    font-weight: 600;
+    color: #6af699;
+    margin-bottom: 10px;
+    padding: 8px;
+    background: rgba(55, 200, 134, 0.1);
+    border-radius: 4px;
+    text-align: center;
+}
+
+.option-chain-content {
+    max-height: 500px;
+    overflow-y: auto;
+    margin-bottom: 15px;
+}
+
+.loading-spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    color: #bac7e4;
+    font-size: 11px;
+}
+
+.loading-spinner .spinner {
+    margin-right: 10px;
+}
+
+/* Option Chain Table */
+.option-chain-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10px;
+}
+
+.option-chain-table th {
+    padding: 8px 6px;
+    text-align: center;
+    font-weight: 600;
+    color: #37c886;
+    border-bottom: 2px solid #3a4553;
+    background-color: #0b0f13;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.option-chain-table td {
+    padding: 8px 6px;
+    text-align: center;
+    border-bottom: 1px solid #3a4553;
+    color: #bac7e4;
+}
+
+.option-chain-table .strike-cell {
+    font-weight: 700;
+    color: #6af699;
+    background-color: rgba(55, 200, 134, 0.05);
+    font-size: 11px;
+}
+
+.option-chain-table .call-side {
+    background-color: rgba(106, 246, 153, 0.03);
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.option-chain-table .put-side {
+    background-color: rgba(255, 69, 121, 0.03);
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.option-chain-table .call-side:hover {
+    background-color: rgba(106, 246, 153, 0.1);
+}
+
+.option-chain-table .put-side:hover {
+    background-color: rgba(255, 69, 121, 0.1);
+}
+
+.option-chain-table .greek-value {
+    font-family: 'Courier New', monospace;
+    font-size: 9px;
+}
+
+/* Column headers styling */
+.option-chain-table .calls-header {
+    background-color: rgba(106, 246, 153, 0.15);
+    color: #6af699;
+}
+
+.option-chain-table .puts-header {
+    background-color: rgba(255, 69, 121, 0.15);
+    color: #ff4579;
+}
+
+.option-chain-table .strike-header {
+    background-color: rgba(55, 200, 134, 0.2);
+}
+
+/* Scrollbar for option chain content */
+.option-chain-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.option-chain-content::-webkit-scrollbar-track {
+    background: #1b202c;
+    border-radius: 4px;
+}
+
+.option-chain-content::-webkit-scrollbar-thumb {
+    background: #37c886;
+    border-radius: 4px;
+}
+
+.option-chain-content::-webkit-scrollbar-thumb:hover {
+    background: #6af699;
+}
+
+.option-chain-content {
     scrollbar-width: thin;
     scrollbar-color: #37c886 #1b202c;
 }

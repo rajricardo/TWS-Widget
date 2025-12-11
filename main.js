@@ -31,10 +31,12 @@ TWS_CLIENT_ID=${clientId}
   }
 }
 
-function createWindow() {
-  mainWindow = new BrowserWindow({
-    width: 750,
-    height: 500,
+function createWindow(bounds = null) {
+  const windowOptions = {
+    width: bounds?.width || 750,
+    height: bounds?.height || 500,
+    x: bounds?.x,
+    y: bounds?.y,
     minWidth: 700,
     minHeight: 450,
     resizable: true,
@@ -45,12 +47,29 @@ function createWindow() {
     },
     titleBarStyle: 'default',
     backgroundColor: '#f5f5f5'
-  });
+  };
+
+  mainWindow = new BrowserWindow(windowOptions);
 
   mainWindow.loadFile('index.html');
 
   // Open DevTools in development mode (optional)
   // mainWindow.webContents.openDevTools();
+
+  // Listen for window resize and move events
+  let resizeTimeout;
+  const saveBounds = () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      if (mainWindow && !mainWindow.isMaximized() && !mainWindow.isMinimized()) {
+        const bounds = mainWindow.getBounds();
+        mainWindow.webContents.send('window-bounds-changed', bounds);
+      }
+    }, 500); // Debounce to avoid excessive saves
+  };
+
+  mainWindow.on('resize', saveBounds);
+  mainWindow.on('move', saveBounds);
 
   mainWindow.on('closed', function () {
     mainWindow = null;
@@ -312,6 +331,19 @@ ipcMain.handle('validate-ticker', async (event, ticker) => {
   }
 });
 
+// Handle get option chain request
+ipcMain.handle('get-option-chain', async (event, ticker) => {
+  try {
+    const response = await sendCommandToBridge({
+      type: 'get_option_chain',
+      data: { ticker }
+    });
+    return response;
+  } catch (error) {
+    return { success: false, message: error.message, optionChain: [] };
+  }
+});
+
 // Handle update connection settings request
 ipcMain.handle('update-connection-settings', async (event, settings) => {
   TWS_HOST = settings.host || '127.0.0.1';
@@ -332,3 +364,19 @@ ipcMain.handle('get-connection-settings', async () => {
   };
 });
 
+// Handle get window bounds request
+ipcMain.handle('get-window-bounds', async () => {
+  if (mainWindow) {
+    return mainWindow.getBounds();
+  }
+  return null;
+});
+
+// Handle set window bounds request
+ipcMain.handle('set-window-bounds', async (event, bounds) => {
+  if (mainWindow && bounds) {
+    mainWindow.setBounds(bounds);
+    return { success: true };
+  }
+  return { success: false };
+});

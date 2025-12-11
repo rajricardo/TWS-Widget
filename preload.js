@@ -1,4 +1,3 @@
-
 const { contextBridge, ipcRenderer } = require('electron');
 
 // Expose protected methods that allow the renderer process to use
@@ -19,6 +18,12 @@ contextBridge.exposeInMainWorld(
     closePosition: (positionParams) => ipcRenderer.invoke('close-position', positionParams),
     closeAllPositions: () => ipcRenderer.invoke('close-all-positions'),
     getTickerPrice: (ticker) => ipcRenderer.invoke('get-ticker-price', ticker),
-    validateTicker: (ticker) => ipcRenderer.invoke('validate-ticker', ticker)
+    validateTicker: (ticker) => ipcRenderer.invoke('validate-ticker', ticker),
+    getOptionChain: (ticker) => ipcRenderer.invoke('get-option-chain', ticker),
+
+    // Window management methods
+    getWindowBounds: () => ipcRenderer.invoke('get-window-bounds'),
+    setWindowBounds: (bounds) => ipcRenderer.invoke('set-window-bounds', bounds),
+    onWindowBoundsChanged: (callback) => ipcRenderer.on('window-bounds-changed', (event, bounds) => callback(bounds))
   }
 );

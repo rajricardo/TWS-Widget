@@ -48,6 +48,12 @@ const errorDialog = document.getElementById('errorDialog');
 const errorMessage = document.getElementById('errorMessage');
 const errorOkBtn = document.getElementById('errorOkBtn');
 
+// Option Chain DOM elements
+const optionChainBtn = document.getElementById('optionChainBtn');
+const optionChainDialog = document.getElementById('optionChainDialog');
+const closeOptionChainBtn = document.getElementById('closeOptionChainBtn');
+const optionChainContent = document.getElementById('optionChainContent');
+
 let isConnected = false;
 let refreshInterval = null;
 let pendingOrder = null;
@@ -72,7 +78,8 @@ async function loadSettings() {
         fontSize: 'medium',
         watchlist: ['SPY', 'QQQ', 'AAPL', 'TSLA', 'NVDA', 'MSFT'],
         stopLoss: '',
-        takeProfit: ''
+        takeProfit: '',
+        windowBounds: null
     };
 }
 
@@ -179,7 +186,24 @@ async function initializeSettings() {
     applyTheme(settings.theme);
     applyFontSize(settings.fontSize);
     populateTickerDropdown(settings.watchlist);
+    
+    // Restore window bounds if saved
+    if (settings.windowBounds) {
+        await window.api.setWindowBounds(settings.windowBounds);
+    }
+    
+    // Listen for window bounds changes and save them
+    window.api.onWindowBoundsChanged((bounds) => {
+        saveWindowBounds(bounds);
+    });
+    
     return settings;
+}
+
+async function saveWindowBounds(bounds) {
+    const currentSettings = await loadSettings();
+    currentSettings.windowBounds = bounds;
+    saveSettings(currentSettings);
 }
 
 // Set default expiry date to today
@@ -190,6 +214,11 @@ expiryInput.value = today;
 tickerInput.addEventListener('change', async () => {
     if (isConnected && tickerInput.value) {
         await fetchAndPopulatePrice();
+        // Enable option chain button when ticker is selected
+        optionChainBtn.disabled = false;
+    } else {
+        // Disable option chain button when no ticker selected
+        optionChainBtn.disabled = true;
     }
 });
 
@@ -261,6 +290,12 @@ settingsBtn.addEventListener('click', async () => {
 
     connectionSettingsChanged = false;
     settingsDialog.style.display = 'flex';
+    
+    // Reset scroll position to top
+    const modalContent = settingsDialog.querySelector('.modal-content');
+    if (modalContent) {
+        modalContent.scrollTop = 0;
+    }
 });
 
 closeSettingsBtn.addEventListener('click', () => {
@@ -384,6 +419,160 @@ errorDialog.addEventListener('click', (e) => {
 function showErrorDialog(message) {
     errorMessage.innerHTML = `<p>${message}</p>`;
     errorDialog.style.display = 'flex';
+}
+
+// Option Chain event listeners
+optionChainBtn.addEventListener('click', async () => {
+    await showOptionChain();
+});
+
+closeOptionChainBtn.addEventListener('click', () => {
+    optionChainDialog.style.display = 'none';
+});
+
+optionChainDialog.addEventListener('click', (e) => {
+    if (e.target === optionChainDialog) {
+        optionChainDialog.style.display = 'none';
+    }
+});
+
+async function showOptionChain() {
+    const ticker = tickerInput.value.trim().toUpperCase();
+    
+    if (!ticker) {
+        showStatus('Please select a ticker symbol first', 'error');
+        return;
+    }
+    
+    // Show dialog with loading state
+    optionChainContent.innerHTML = `
+        <div class="loading-spinner">
+            <span class="spinner"></span>
+            Loading option chain...
+        </div>
+    `;
+    optionChainDialog.style.display = 'flex';
+    
+    try {
+        const result = await window.api.getOptionChain(ticker);
+        
+        if (result.success && result.optionChain && result.optionChain.length > 0) {
+            renderOptionChain(result.optionChain, result.currentPrice);
+        } else {
+            optionChainContent.innerHTML = `
+                <div style="padding: 40px; text-align: center; color: #ff4579;">
+                    <p>${result.message || 'No option chain data available'}</p>
+                </div>
+            `;
+            // Also show error in status bar
+            showStatus(result.message || 'Failed to load option chain', 'error');
+        }
+    } catch (error) {
+        optionChainContent.innerHTML = `
+            <div style="padding: 40px; text-align: center; color: #ff4579;">
+                <p>Error: ${error.message}</p>
+            </div>
+        `;
+        showStatus(`Error loading option chain: ${error.message}`, 'error');
+    }
+}
+
+function renderOptionChain(optionChain, currentPrice) {
+    if (!optionChain || optionChain.length === 0) {
+        optionChainContent.innerHTML = '<p style="text-align: center; padding: 20px;">No option data available</p>';
+        return;
+    }
+    
+    // Build table HTML
+    let tableHTML = `
+        <table class="option-chain-table">
+            <thead>
+                <tr>
+                    <th colspan="4" class="calls-header">CALLS</th>
+                    <th class="strike-header">STRIKE</th>
+                    <th colspan="4" class="puts-header">PUTS</th>
+                </tr>
+                <tr>
+                    <th>Mid</th>
+                    <th>IV</th>
+                    <th>Delta</th>
+                    <th>Theta</th>
+                    <th>Price</th>
+                    <th>IV</th>
+                    <th>Delta</th>
+                    <th>Theta</th>
+                    <th>Mid</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    optionChain.forEach(option => {
+        // Use the mid prices already calculated by the backend
+        const callMid = option.callMid.toFixed(2);
+        const putMid = option.putMid.toFixed(2);
+        
+        tableHTML += `
+            <tr>
+                <td class="call-side" data-type="C" data-strike="${option.strike}" data-expiry="${option.expiryRaw}">$${callMid}</td>
+                <td class="call-side greek-value" data-type="C" data-strike="${option.strike}" data-expiry="${option.expiryRaw}">${option.callIV}</td>
+                <td class="call-side greek-value" data-type="C" data-strike="${option.strike}" data-expiry="${option.expiryRaw}">${Math.abs(option.callDelta)}</td>
+                <td class="call-side greek-value" data-type="C" data-strike="${option.strike}" data-expiry="${option.expiryRaw}">${Math.abs(option.callTheta)}</td>
+                <td class="strike-cell">$${option.strike}</td>
+                <td class="put-side greek-value" data-type="P" data-strike="${option.strike}" data-expiry="${option.expiryRaw}">${option.putIV}</td>
+                <td class="put-side greek-value" data-type="P" data-strike="${option.strike}" data-expiry="${option.expiryRaw}">${Math.abs(option.putDelta)}</td>
+                <td class="put-side greek-value" data-type="P" data-strike="${option.strike}" data-expiry="${option.expiryRaw}">${Math.abs(option.putTheta)}</td>
+                <td class="put-side" data-type="P" data-strike="${option.strike}" data-expiry="${option.expiryRaw}">$${putMid}</td>
+            </tr>
+        `;
+    });
+    
+    tableHTML += `
+            </tbody>
+        </table>
+    `;
+    
+    optionChainContent.innerHTML = tableHTML;
+    
+    // Add double-click event listeners to option cells
+    const callCells = optionChainContent.querySelectorAll('.call-side');
+    const putCells = optionChainContent.querySelectorAll('.put-side');
+    
+    callCells.forEach(cell => {
+        cell.addEventListener('dblclick', () => {
+            selectOption(cell.dataset.type, cell.dataset.strike, cell.dataset.expiry);
+        });
+    });
+    
+    putCells.forEach(cell => {
+        cell.addEventListener('dblclick', () => {
+            selectOption(cell.dataset.type, cell.dataset.strike, cell.dataset.expiry);
+        });
+    });
+}
+
+function selectOption(optionType, strike, expiry) {
+    // Close the dialog
+    optionChainDialog.style.display = 'none';
+    
+    // Format expiry from YYYYMMDD to YYYY-MM-DD
+    const formattedExpiry = `${expiry.substring(0, 4)}-${expiry.substring(4, 6)}-${expiry.substring(6, 8)}`;
+    
+    // Populate the form fields
+    expiryInput.value = formattedExpiry;
+    strikeInput.value = parseFloat(strike).toFixed(2);
+    
+    // Set the option type radio button
+    const radioButtons = document.getElementsByName('optionType');
+    radioButtons.forEach(radio => {
+        if (radio.value === optionType) {
+            radio.checked = true;
+        }
+    });
+    
+    // Show confirmation message
+    const optionTypeName = optionType === 'C' ? 'Call' : 'Put';
+    showStatus(`Selected ${optionTypeName} option: Strike $${strike}, Expiry ${formattedExpiry}`, 'success');
 }
 
 
@@ -679,3 +868,34 @@ function formatNumber(num) {
         maximumFractionDigits: 2
     });
 }
+
+// Global keyboard event listener for Esc key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        // Close settings dialog if open
+        if (settingsDialog.style.display === 'flex') {
+            settingsDialog.style.display = 'none';
+            if (connectionSettingsChanged) {
+                reconnectDialog.style.display = 'flex';
+            }
+        }
+        // Close option chain dialog if open
+        else if (optionChainDialog.style.display === 'flex') {
+            optionChainDialog.style.display = 'none';
+        }
+        // Close error dialog if open
+        else if (errorDialog.style.display === 'flex') {
+            errorDialog.style.display = 'none';
+        }
+        // Close confirmation dialog if open
+        else if (confirmDialog.style.display === 'flex') {
+            confirmDialog.style.display = 'none';
+            pendingOrder = null;
+        }
+        // Close reconnect dialog if open
+        else if (reconnectDialog.style.display === 'flex') {
+            reconnectDialog.style.display = 'none';
+            connectionSettingsChanged = false;
+        }
+    }
+});

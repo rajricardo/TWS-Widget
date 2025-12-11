@@ -409,7 +409,7 @@ def get_balance():
         net_liquidation = 0
         
         for item in account_values:
-            log(f"Account value: tag={item.tag}, value={item.value}, currency={item.currency}")
+            #log(f"Account value: tag={item.tag}, value={item.value}, currency={item.currency}")
             if item.tag == 'LookAheadAvailableFunds' and item.currency == 'USD':
                 net_liquidation = float(item.value)
                 log(f"Found NetLiquidation: {net_liquidation}")
@@ -507,7 +507,7 @@ def get_daily_pnl():
         unrealized_pnl = 0
         
         for item in account_values:
-            log(f"Account value: tag={item.tag}, value={item.value}, currency={item.currency}")
+            #log(f"Account value: tag={item.tag}, value={item.value}, currency={item.currency}")
             if item.currency == 'USD' or item.currency == 'BASE':
                 if item.tag == 'DailyPnL':
                     daily_pnl = float(item.value)
@@ -658,6 +658,36 @@ def close_all_positions():
         return {"success": False, "message": f"Failed to close all positions: {str(e)}"}
 
 
+import sys
+
+def get_option_chain(ticker):
+    """Get option chain for ticker using IBAPI (separate module to avoid ib_insync conflicts)"""
+    try:
+        log(f"Delegating option chain request for {ticker} to IBAPI module...")
+        
+        # Import the IBAPI option chain module
+        from option_chain_ibapi import get_option_chain_ibapi
+        
+        # Get connection parameters from global variables (set in main)
+        # These are the same connection params used for ib_insync
+        if len(sys.argv) >= 4:
+            host = sys.argv[1]
+            port = sys.argv[2]
+            client_id = sys.argv[3]
+        else:
+            # Fallback to defaults
+            host = '127.0.0.1'
+            port = '4002'
+            client_id = '1'
+        
+        # Call the IBAPI module
+        result = get_option_chain_ibapi(ticker, host, port, client_id)
+        return result
+        
+    except Exception as e:
+        log(f"Error getting option chain: {str(e)}\n{traceback.format_exc()}")
+        return {"success": False, "message": f"Failed to get option chain: {str(e)}", "optionChain": []}
+
 
 def handle_command(command):
     """Handle incoming command"""
@@ -728,6 +758,14 @@ def handle_command(command):
             log(f"Validating ticker {ticker}...")
             result = validate_ticker(ticker)
             log(f"Validation result: {result}")
+            send_response(result, request_id)
+
+        elif cmd_type == 'get_option_chain':
+            data = command.get('data', {})
+            ticker = data.get('ticker', '')
+            log(f"Getting option chain for {ticker}...")
+            result = get_option_chain(ticker)
+            log(f"Option chain result: success={result.get('success')}, chains={len(result.get('optionChain', []))}")
             send_response(result, request_id)
 
         else:
