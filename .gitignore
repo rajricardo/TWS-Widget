@@ -1,0 +1,26 @@
+# Python virtual environment
+bin/
+include/
+lib/
+pyvenv.cfg
+
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+
+# OS files
+.DS_Store
+.abacus.donotdelete
+
+# IDE
+.vscode/
+.idea/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
