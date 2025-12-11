@@ -15,6 +15,7 @@ A lightning-fast desktop application for options trading with Interactive Broker
 - 💰 Auto-populate strike prices
 - 📊 Live portfolio balance and P&L tracking
 - 🛡️ Stop Loss & Take Profit with bracket orders
+- 🔗 Option chain viewer with greeks (IV, Delta, Theta)
 - 🎨 Dark/Light themes with customizable fonts
 - 📝 Ticker watchlist with validation
 
@@ -77,6 +78,23 @@ Add tickers to your watchlist. Only valid tickers with options trading enabled a
 **Example:** 
 - Fill @ $3.00, SL 20%, TP 30%
 - Stop order @ $2.40, Limit order @ $3.90
+
+## Using the Option Chain
+
+The **Option Chain** button (🅾️) becomes available once you select a ticker from the watchlist.
+
+### How to Use:
+1. Select a ticker from the Symbol dropdown
+2. Click the **🅾️** button in the header
+3. View real-time options data with greeks:
+   - **Mid Price**: Current mid-market price
+   - **IV**: Implied Volatility
+   - **Delta**: Price sensitivity to underlying
+   - **Theta**: Time decay
+4. **Double-click** any option to auto-populate the order form
+
+**Keyboard Shortcuts:**
+- Press **Esc** to close the Option Chain or Settings dialogs
 
 ## Trading Hours
 
