@@ -117,6 +117,17 @@ class OptionChainApp(EWrapper, EClient):
             self.option_data[reqId]['theta'] = theta
 
 
+def is_valid_strike(strike):
+    """
+    Validate if a strike price is standard for equity options.
+    Most equity options have strikes in whole numbers or 0.50/2.50 increments.
+    This filters out unusual strikes like 609.78 that may indicate wrong contract.
+    """
+    # Check if strike is a whole number or standard half-dollar increment
+    # Allow whole numbers and X.50 strikes
+    return strike == round(strike) or (strike * 2) == round(strike * 2)
+
+
 def get_option_chain_ibapi(ticker, host, port, client_id):
     """
     Fetch option chain for ticker using IBAPI
@@ -173,15 +184,17 @@ def get_option_chain_ibapi(ticker, host, port, client_id):
             app.disconnect()
             return {"success": False, "message": f"Could not find contract for {ticker}", "optionChain": []}
         
-        # Get the contract ID
-        stock_con_id = app.contract_details[0].contract.conId
+        # Get the fully qualified contract from TWS
+        qualified_contract = app.contract_details[0].contract
+        stock_con_id = qualified_contract.conId
         print(f"[IBAPI] Stock contract ID: {stock_con_id}", file=sys.stderr)
+        print(f"[IBAPI] Primary exchange: {qualified_contract.primaryExchange}", file=sys.stderr)
         
-        # Request option parameters using the proper contract ID
+        # Request option parameters using the fully qualified contract
         app.data_ready.clear()
         app.pending_requests.add(100)
         app.option_params = []
-        app.reqSecDefOptParams(100, ticker, "", "STK", stock_con_id)
+        app.reqSecDefOptParams(100, qualified_contract.symbol, "", "STK", stock_con_id)
         
         # Wait for option parameters
         if not app.data_ready.wait(10):
@@ -203,7 +216,14 @@ def get_option_chain_ibapi(ticker, host, port, client_id):
             primary_params = app.option_params[0]
         
         expirations = primary_params['expirations']
-        all_strikes = primary_params['strikes']
+        raw_strikes = primary_params['strikes']
+        
+        # Filter out invalid strikes (e.g., 609.78 for standard equity options)
+        all_strikes = [s for s in raw_strikes if is_valid_strike(s)]
+        
+        if len(all_strikes) < len(raw_strikes):
+            filtered_count = len(raw_strikes) - len(all_strikes)
+            print(f"[IBAPI] Filtered out {filtered_count} invalid strikes", file=sys.stderr)
         
         if not expirations:
             app.disconnect()
